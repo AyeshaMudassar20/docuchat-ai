@@ -14,3 +14,13 @@ def signup(user_data: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
     new_user = auth_service.create_user(db, user_data)
     return new_user
+
+from app.schemas.user import UserCreate, UserResponse, UserLogin, Token
+
+@router.post("/login", response_model=Token)
+def login(user_data: UserLogin, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == user_data.email).first()
+    if not user or not auth_service.verify_password(user_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    access_token = auth_service.create_access_token(data={"sub": user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
