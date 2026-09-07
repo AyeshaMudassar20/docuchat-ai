@@ -1,10 +1,11 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-
+  const navigate = useNavigate();
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
@@ -24,6 +25,7 @@ function Login() {
       }
 
       localStorage.setItem('token', data.access_token);
+      navigate('/dashboard');
       console.log('Login successful! Token saved:', data.access_token);
     } catch (err) {
       setError('Could not connect to server');
