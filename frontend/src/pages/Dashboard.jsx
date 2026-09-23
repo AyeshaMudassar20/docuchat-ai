@@ -9,6 +9,7 @@ function Dashboard() {
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     fetchConversations();
@@ -20,6 +21,7 @@ function Dashboard() {
     });
     const data = await res.json();
     setConversations(data);
+    return data;
   }
 
   async function handleNewChat() {
@@ -44,21 +46,58 @@ function Dashboard() {
 
   async function handleSendMessage(e) {
     e.preventDefault();
-    if (!newMessage.trim() || !activeConversation) return;
+    if (!newMessage.trim() || !activeConversation || isSending) return;
 
-    const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ content: newMessage, role: 'user' }),
-    });
-    const data = await res.json();
-    setMessages([...messages, data]);
-    setNewMessage('');
+    const isFirstMessage = messages.length === 0;
+
+    setIsSending(true);
+    try {
+      const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ content: newMessage, role: 'user' }),
+      });
+      const data = await res.json();
+      setMessages([...messages, ...data]);
+      setNewMessage('');
+
+      if (isFirstMessage) {
+        const updated = await fetchConversations();
+        const updatedActive = updated.find((c) => c.id === activeConversation.id);
+        if (updatedActive) setActiveConversation(updatedActive);
+      }
+    } catch (err) {
+      console.error('Failed to send message:', err);
+    } finally {
+      setIsSending(false);
+    }
   }
 
   function handleLogout() {
     localStorage.removeItem('token');
     navigate('/login');
+  }
+
+  async function handleDeleteConversation(convId, e) {
+    e.stopPropagation();
+    const confirmed = window.confirm('Delete this conversation?');
+    if (!confirmed) return;
+
+    const res = await fetch(`http://localhost:8000/conversations/${convId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) {
+      alert('Failed to delete. Try logging in again.');
+      return;
+    }
+
+    setConversations(conversations.filter((c) => c.id !== convId));
+    if (activeConversation?.id === convId) {
+      setActiveConversation(null);
+      setMessages([]);
+    }
   }
 
   return (
@@ -68,8 +107,13 @@ function Dashboard() {
         <button onClick={handleLogout}>Logout</button>
         <ul>
           {conversations.map((conv) => (
-            <li key={conv.id} onClick={() => openConversation(conv)} style={{ cursor: 'pointer' }}>
+            <li
+              key={conv.id}
+              onClick={() => openConversation(conv)}
+              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+            >
               {conv.title}
+              <button onClick={(e) => handleDeleteConversation(conv.id, e)}>🗑</button>
             </li>
           ))}
         </ul>
@@ -90,8 +134,11 @@ function Dashboard() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type a message..."
+                disabled={isSending}
               />
-              <button type="submit">Send</button>
+              <button type="submit" disabled={isSending}>
+                {isSending ? 'Sending...' : 'Send'}
+              </button>
             </form>
           </>
         ) : (

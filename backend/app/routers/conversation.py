@@ -7,6 +7,7 @@ from app.services.auth_service import get_current_user
 from app.models.user import User
 from app.schemas.message import MessageCreate, MessageResponse
 from app.services import message_service
+from app.services import llm_service
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
@@ -24,7 +25,8 @@ def list_conversations(
     current_user: User = Depends(get_current_user),
 ):
     return conversation_service.get_user_conversations(db, current_user.id)
-@router.post("/{conversation_id}/messages", response_model=MessageResponse)
+
+@router.post("/{conversation_id}/messages", response_model=list[MessageResponse])
 def add_message(
     conversation_id: int,
     data: MessageCreate,
@@ -34,7 +36,18 @@ def add_message(
     conversation = conversation_service.get_conversation_by_id(db, conversation_id)
     if not conversation or conversation.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    return message_service.create_message(db, conversation_id, data.role, data.content)
+
+    existing_messages = message_service.get_conversation_messages(db, conversation_id)
+    if len(existing_messages) == 0 and conversation.title == "New Chat":
+        new_title = data.content[:30] + ("..." if len(data.content) > 30 else "")
+        conversation_service.update_conversation_title(db, conversation_id, new_title)
+
+    user_message = message_service.create_message(db, conversation_id, data.role, data.content)
+
+    ai_reply = llm_service.get_ai_response(data.content)
+    assistant_message = message_service.create_message(db, conversation_id, "assistant", ai_reply)
+
+    return [user_message, assistant_message]
 
 @router.get("/{conversation_id}/messages", response_model=list[MessageResponse])
 def list_messages(
@@ -46,3 +59,15 @@ def list_messages(
     if not conversation or conversation.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Conversation not found")
     return message_service.get_conversation_messages(db, conversation_id)
+
+@router.delete("/{conversation_id}")
+def delete_conversation(
+    conversation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    conversation = conversation_service.get_conversation_by_id(db, conversation_id)
+    if not conversation or conversation.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    conversation_service.delete_conversation(db, conversation_id)
+    return {"message": "Conversation deleted"}
