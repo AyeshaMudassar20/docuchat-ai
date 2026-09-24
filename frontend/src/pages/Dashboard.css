@@ -1,0 +1,166 @@
+.dashboard-container {
+  display: flex;
+  height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #1e1e2f;
+  color: #f0f0f0;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: #161622;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #2a2a3d;
+}
+
+.sidebar-buttons {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background-color: #6c5ce7;
+  color: white;
+  flex: 1;
+}
+
+.btn-secondary {
+  background-color: #33334d;
+  color: #ccc;
+}
+
+.conversation-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+}
+
+.conversation-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 4px;
+  font-size: 14px;
+  transition: background-color 0.15s;
+}
+
+.conversation-item:hover {
+  background-color: #26263d;
+}
+
+.conversation-item.active {
+  background-color: #6c5ce7;
+}
+
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.delete-btn:hover {
+  opacity: 1;
+}
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.chat-title {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  border-bottom: 1px solid #2a2a3d;
+  padding-bottom: 12px;
+}
+
+.upload-box {
+  border: 1px dashed #6c5ce7;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  background-color: #26263d;
+}
+
+.upload-status {
+  margin: 6px 0 0 0;
+  color: #a29bfe;
+}
+
+.messages-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.message-bubble {
+  max-width: 65%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  line-height: 1.4;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+.message-user {
+  align-self: flex-end;
+  background-color: #6c5ce7;
+  color: white;
+  border-bottom-right-radius: 2px;
+}
+
+.message-assistant {
+  align-self: flex-start;
+  background-color: #2e2e45;
+  color: #f0f0f0;
+  border-bottom-left-radius: 2px;
+}
+
+.message-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.message-input {
+  flex: 1;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #33334d;
+  background-color: #26263d;
+  color: white;
+  font-size: 14px;
+}
+
+.message-input:focus {
+  outline: none;
+  border-color: #6c5ce7;
+}
+
+.empty-state {
+  color: #888;
+  text-align: center;
+  margin-top: 40px;
+}

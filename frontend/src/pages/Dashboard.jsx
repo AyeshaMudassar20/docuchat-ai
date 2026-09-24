@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import './Dashboard.css';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -138,60 +139,67 @@ function Dashboard() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
-      <div style={{ width: '250px', borderRight: '1px solid gray', padding: '10px' }}>
-        <button onClick={handleNewChat}>+ New Chat</button>
-        <button onClick={handleLogout}>Logout</button>
-        <ul>
+    <div className="dashboard-container">
+      <div className="sidebar">
+        <div className="sidebar-buttons">
+          <button className="btn btn-primary" onClick={handleNewChat}>+ New Chat</button>
+          <button className="btn btn-secondary" onClick={handleLogout}>Logout</button>
+        </div>
+        <ul className="conversation-list">
           {conversations.map((conv) => (
             <li
               key={conv.id}
               onClick={() => openConversation(conv)}
-              style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between' }}
+              className={`conversation-item ${activeConversation?.id === conv.id ? 'active' : ''}`}
             >
-              {conv.title}
-              <button onClick={(e) => handleDeleteConversation(conv.id, e)}>🗑</button>
+              <span>{conv.title}</span>
+              <button className="delete-btn" onClick={(e) => handleDeleteConversation(conv.id, e)}>🗑</button>
             </li>
           ))}
         </ul>
       </div>
 
-      <div style={{ flex: 1, padding: '10px' }}>
+      <div className="chat-panel">
         {activeConversation ? (
           <>
-            <h3>{activeConversation.title}</h3>
+            <h3 className="chat-title">{activeConversation.title}</h3>
 
-            <div style={{ marginBottom: '10px', padding: '10px', border: '1px dashed gray' }}>
-              <label>
-                📎 Upload PDF:{' '}
-                <input type="file" accept=".pdf" onChange={handleFileUpload} disabled={isUploading} />
-              </label>
-              {isUploading && <p>Uploading...</p>}
+            <div className="upload-box">
+              📎 Upload PDF:{' '}
+              <input type="file" accept=".pdf" onChange={handleFileUpload} disabled={isUploading} />
+              {isUploading && <p className="upload-status">Uploading...</p>}
               {uploadedDocs.length > 0 && (
-                <p>Uploaded: {uploadedDocs.join(', ')}</p>
+                <p className="upload-status">Uploaded: {uploadedDocs.join(', ')}</p>
               )}
             </div>
 
-            <div>
+            <div className="messages-area">
               {messages.map((msg) => (
-                <p key={msg.id}><strong>{msg.role}:</strong> {msg.content}</p>
+                <div
+                  key={msg.id}
+                  className={`message-bubble ${msg.role === 'user' ? 'message-user' : 'message-assistant'}`}
+                >
+                  {msg.content}
+                </div>
               ))}
             </div>
-            <form onSubmit={handleSendMessage}>
+
+            <form className="message-form" onSubmit={handleSendMessage}>
               <input
+                className="message-input"
                 type="text"
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 placeholder="Type a message..."
                 disabled={isSending}
               />
-              <button type="submit" disabled={isSending}>
+              <button className="btn btn-primary" type="submit" disabled={isSending}>
                 {isSending ? 'Sending...' : 'Send'}
               </button>
             </form>
           </>
         ) : (
-          <p>Select or create a conversation to start chatting.</p>
+          <p className="empty-state">Select or create a conversation to start chatting.</p>
         )}
       </div>
     </div>
