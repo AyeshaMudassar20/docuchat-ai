@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
+import { API_URL } from '../config';
 
 function Dashboard() {
   const navigate = useNavigate();
@@ -19,7 +20,7 @@ function Dashboard() {
   }, []);
 
   async function fetchConversations() {
-    const res = await fetch('http://localhost:8000/conversations/', {
+    const res = await fetch(`${API_URL}/conversations/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -28,7 +29,7 @@ function Dashboard() {
   }
 
   async function handleNewChat() {
-    const res = await fetch('http://localhost:8000/conversations/', {
+    const res = await fetch(`${API_URL}/conversations/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ title: 'New Chat' }),
@@ -41,7 +42,7 @@ function Dashboard() {
   async function openConversation(conversation) {
     setActiveConversation(conversation);
     setUploadedDocs([]);
-    const res = await fetch(`http://localhost:8000/conversations/${conversation.id}/messages`, {
+    const res = await fetch(`${API_URL}/conversations/${conversation.id}/messages`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
@@ -56,7 +57,7 @@ function Dashboard() {
 
     setIsSending(true);
     try {
-      const res = await fetch(`http://localhost:8000/conversations/${activeConversation.id}/messages`, {
+      const res = await fetch(`${API_URL}/conversations/${activeConversation.id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ content: newMessage, role: 'user' }),
@@ -87,7 +88,7 @@ function Dashboard() {
       formData.append('file', file);
 
       const res = await fetch(
-        `http://localhost:8000/conversations/${activeConversation.id}/documents/upload`,
+        `${API_URL}/conversations/${activeConversation.id}/documents/upload`,
         {
           method: 'POST',
           headers: { Authorization: `Bearer ${token}` },
@@ -121,7 +122,7 @@ function Dashboard() {
     const confirmed = window.confirm('Delete this conversation?');
     if (!confirmed) return;
 
-    const res = await fetch(`http://localhost:8000/conversations/${convId}`, {
+    const res = await fetch(`${API_URL}/conversations/${convId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });

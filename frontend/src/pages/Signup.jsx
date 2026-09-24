@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './Login.css';
+import { API_URL } from '../config';
 
 function Signup() {
   const [name, setName] = useState('');
@@ -21,7 +22,7 @@ function Signup() {
     }
 
     try {
-      const response = await fetch('http://localhost:8000/auth/signup', {
+      const response = await fetch(`${API_URL}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),

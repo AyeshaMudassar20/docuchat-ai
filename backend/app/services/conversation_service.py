@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from app.models.conversation import Conversation
 from app.models.message import Message
+from app.models.document import Document
 
 def create_conversation(db: Session, user_id: int, title: str) -> Conversation:
     new_conversation = Conversation(title=title, user_id=user_id)
@@ -17,8 +18,15 @@ def get_conversation_by_id(db: Session, conversation_id: int):
 
 def delete_conversation(db: Session, conversation_id: int):
     db.query(Message).filter(Message.conversation_id == conversation_id).delete()
+    db.query(Document).filter(Document.conversation_id == conversation_id).delete()
     db.query(Conversation).filter(Conversation.id == conversation_id).delete()
     db.commit()
+
+    try:
+        from app.services.document_service import chroma_client
+        chroma_client.delete_collection(name=f"conversation_{conversation_id}")
+    except Exception:
+        pass
 
 def update_conversation_title(db: Session, conversation_id: int, title: str):
     conversation = db.query(Conversation).filter(Conversation.id == conversation_id).first()
