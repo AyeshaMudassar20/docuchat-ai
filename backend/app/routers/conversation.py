@@ -87,7 +87,11 @@ async def upload_document(
 
     file_bytes = await file.read()
     extracted_text = document_service.extract_text_from_pdf(file_bytes)
-    print(f"Extracted {len(extracted_text)} characters from {file.filename}")
 
     document = document_service.create_document(db, conversation_id, file.filename)
+
+    chunks = document_service.chunk_text(extracted_text)
+    document_service.store_chunks_in_chromadb(document.id, conversation_id, chunks)
+    print(f"Stored {len(chunks)} chunks in ChromaDB for document {document.id}")
+
     return document
