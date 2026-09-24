@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.conversation import ConversationCreate, ConversationResponse
@@ -8,6 +8,8 @@ from app.models.user import User
 from app.schemas.message import MessageCreate, MessageResponse
 from app.services import message_service
 from app.services import llm_service
+from app.schemas.document import DocumentResponse
+from app.services import document_service
 
 router = APIRouter(prefix="/conversations", tags=["conversations"])
 
@@ -71,3 +73,21 @@ def delete_conversation(
         raise HTTPException(status_code=404, detail="Conversation not found")
     conversation_service.delete_conversation(db, conversation_id)
     return {"message": "Conversation deleted"}
+
+@router.post("/{conversation_id}/documents/upload", response_model=DocumentResponse)
+async def upload_document(
+    conversation_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    conversation = conversation_service.get_conversation_by_id(db, conversation_id)
+    if not conversation or conversation.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    file_bytes = await file.read()
+    extracted_text = document_service.extract_text_from_pdf(file_bytes)
+    print(f"Extracted {len(extracted_text)} characters from {file.filename}")
+
+    document = document_service.create_document(db, conversation_id, file.filename)
+    return document
