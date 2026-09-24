@@ -46,7 +46,13 @@ def add_message(
 
     user_message = message_service.create_message(db, conversation_id, data.role, data.content)
 
-    ai_reply = llm_service.get_ai_response(data.content)
+    retrieved = document_service.retrieve_relevant_chunks(conversation_id, data.content)
+    context = None
+    if retrieved:
+        context_parts = [f"(from {meta.get('filename', 'uploaded document')}): {chunk}" for chunk, meta in retrieved]
+        context = "\n\n".join(context_parts)
+
+    ai_reply = llm_service.get_ai_response(data.content, context=context)
     assistant_message = message_service.create_message(db, conversation_id, "assistant", ai_reply)
 
     return [user_message, assistant_message]
@@ -91,7 +97,7 @@ async def upload_document(
     document = document_service.create_document(db, conversation_id, file.filename)
 
     chunks = document_service.chunk_text(extracted_text)
-    document_service.store_chunks_in_chromadb(document.id, conversation_id, chunks)
+    document_service.store_chunks_in_chromadb(document.id, conversation_id, document.filename, chunks)
     print(f"Stored {len(chunks)} chunks in ChromaDB for document {document.id}")
 
     return document
