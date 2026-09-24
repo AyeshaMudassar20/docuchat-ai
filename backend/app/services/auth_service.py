@@ -20,7 +20,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_user(db: Session, user_data: UserCreate) -> User:
     hashed_pw = hash_password(user_data.password)
-    new_user = User(email=user_data.email, hashed_password=hashed_pw)
+    new_user = User(name=user_data.name, email=user_data.email, hashed_password=hashed_pw)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
