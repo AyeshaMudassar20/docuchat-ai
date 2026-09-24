@@ -10,6 +10,8 @@ function Dashboard() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedDocs, setUploadedDocs] = useState([]);
 
   useEffect(() => {
     fetchConversations();
@@ -37,6 +39,7 @@ function Dashboard() {
 
   async function openConversation(conversation) {
     setActiveConversation(conversation);
+    setUploadedDocs([]);
     const res = await fetch(`http://localhost:8000/conversations/${conversation.id}/messages`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -70,6 +73,40 @@ function Dashboard() {
       console.error('Failed to send message:', err);
     } finally {
       setIsSending(false);
+    }
+  }
+
+  async function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file || !activeConversation) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(
+        `http://localhost:8000/conversations/${activeConversation.id}/documents/upload`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        }
+      );
+
+      if (!res.ok) {
+        alert('Upload failed. Please try again.');
+        return;
+      }
+
+      const data = await res.json();
+      setUploadedDocs([...uploadedDocs, data.filename]);
+    } catch (err) {
+      console.error('Failed to upload document:', err);
+      alert('Upload failed. Please try again.');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
     }
   }
 
@@ -123,6 +160,18 @@ function Dashboard() {
         {activeConversation ? (
           <>
             <h3>{activeConversation.title}</h3>
+
+            <div style={{ marginBottom: '10px', padding: '10px', border: '1px dashed gray' }}>
+              <label>
+                📎 Upload PDF:{' '}
+                <input type="file" accept=".pdf" onChange={handleFileUpload} disabled={isUploading} />
+              </label>
+              {isUploading && <p>Uploading...</p>}
+              {uploadedDocs.length > 0 && (
+                <p>Uploaded: {uploadedDocs.join(', ')}</p>
+              )}
+            </div>
+
             <div>
               {messages.map((msg) => (
                 <p key={msg.id}><strong>{msg.role}:</strong> {msg.content}</p>
